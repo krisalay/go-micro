@@ -29,4 +29,32 @@ func (e *Emitter) Push(event string, serverity string) error {
 	defer channel.Close()
 
 	log.Println("Pushing to channel")
+
+	err = channel.Publish(
+		"logs_topic",
+		serverity,
+		false,
+		false,
+		amqp.Publishing{
+			ContentType: "text/plain",
+			Body:        []byte(event),
+		},
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func NewEventEmitter(conn *amqp.Connection) (Emitter, error) {
+	emitter := Emitter{
+		connection: conn,
+	}
+	err := emitter.setup()
+
+	if err != nil {
+		return Emitter{}, err
+	}
+
+	return emitter, nil
 }
